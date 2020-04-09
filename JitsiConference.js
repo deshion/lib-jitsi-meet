@@ -893,8 +893,6 @@ JitsiConference.prototype.getTranscriptionStatus = function() {
  * another video track in the conference.
  */
 JitsiConference.prototype.addTrack = function(track) {
-    // TODO: handle E2EE.
-
     if (track.isVideoTrack()) {
         // Ensure there's exactly 1 local video track in the conference.
         const localVideoTrack = this.rtc.getLocalVideoTrack();
@@ -1115,6 +1113,18 @@ JitsiConference.prototype._setupNewTrack = function(newTrack) {
     newTrack._setConference(this);
 
     this.eventEmitter.emit(JitsiConferenceEvents.TRACK_ADDED, newTrack);
+
+    // Setup E2EE handling, if supported.
+    if (this._e2eeCtx) {
+        const activeTPC = this.getActivePeerConnection();
+        const sender = activeTPC ? activeTPC.findSenderByStream(newTrack.getOriginalStream()) : null;
+
+        if (sender) {
+            this._e2eeCtx.handleSender(sender, newTrack.getType());
+        } else {
+            logger.warn(`Could not handle E2EE for local ${newTrack.getType()} track: sender not found`);
+        }
+    }
 };
 
 /**
@@ -1631,8 +1641,6 @@ JitsiConference.prototype.onDisplayNameChanged = function(jid, displayName) {
  * JitsiConference
  */
 JitsiConference.prototype.onRemoteTrackAdded = function(track) {
-    // TODO: handle E2EE
-
     if (track.isP2P && !this.isP2PActive()) {
         logger.info(
             'Trying to add remote P2P track, when not in P2P - IGNORED');
@@ -1644,6 +1652,8 @@ JitsiConference.prototype.onRemoteTrackAdded = function(track) {
 
         return;
     }
+
+    // TODO: handle E2EE
 
     const id = track.getParticipantId();
     const participant = this.getParticipantById(id);
@@ -1849,7 +1859,6 @@ JitsiConference.prototype._acceptJvbIncomingCall = function(
             value: now
         }));
 
-    // TODO: pass e2ee context here?
     try {
         jingleSession.initialize(this.room, this.rtc, this.options.config);
     } catch (error) {
@@ -3281,6 +3290,16 @@ JitsiConference.prototype._sendConferenceJoinAnalyticsEvent = function() {
         participantId: `${meetingId}.${this._statsCurrentId}`
     }));
     this._conferenceJoinAnalyticsEventSent = true;
+};
+
+/**
+ * Returns whether End-To-End encryption is supported. Note that not all participants
+ * in the conference may support it.
+ *
+ * @returns {boolean}
+ */
+JitsiConference.prototype.isE2EESupported = function() {
+    return Boolean(this._e2eeCtx);
 };
 
 /**
