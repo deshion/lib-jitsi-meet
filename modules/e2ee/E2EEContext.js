@@ -83,6 +83,8 @@ export default class E2EEcontext {
      * @param {string} kind - The kind of track this receiver belongs to.
      */
     handleReceiver(receiver, kind) {
+        logger.debug('E2EE - handleReceiver');
+
         const receiverStreams
             = kind === 'video' ? receiver.createEncodedVideoStreams() : receiver.createEncodedAudioStreams();
         const transform = new TransformStream({
@@ -102,6 +104,8 @@ export default class E2EEcontext {
      * @param {string} kind - The kind of track this sender belongs to.
      */
     handleSender(sender, kind) {
+        logger.debug('E2EE - handleSender');
+
         const senderStreams
             = kind === 'video' ? sender.createEncodedVideoStreams() : sender.createEncodedAudioStreams();
         const transform = new TransformStream({
@@ -224,6 +228,8 @@ export default class E2EEcontext {
      * 9) Enqueue the encrypted frame for sending.
      */
     _encodeFunction(encodedFrame, controller) {
+        logger.debug('E2EE - encodeFunction');
+
         const keyIndex = this._currentKeyIndex % this._cryptoKeyRing.length;
 
         if (this._cryptoKeyRing[keyIndex]) {
@@ -278,6 +284,8 @@ export default class E2EEcontext {
      * 7) Enqueue the decrypted frame for decoding.
      */
     _decodeFunction(encodedFrame, controller) {
+        logger.debug('E2EE - decodeFunction');
+
         const data = new Uint8Array(encodedFrame.data);
         const keyIndex = data[encodedFrame.data.byteLength - 1];
 
