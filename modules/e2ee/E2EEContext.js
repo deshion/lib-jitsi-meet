@@ -82,7 +82,7 @@ export default class E2EEcontext {
      * @param {RTCRtpReceiver} receiver - The receiver which will get the decoding function injected.
      * @param {string} kind - The kind of track this receiver belongs to.
      */
-    handleReveiver(receiver, kind) {
+    handleReceiver(receiver, kind) {
         const receiverStreams
             = kind === 'video' ? receiver.createEncodedVideoStreams() : receiver.createEncodedAudioStreams();
         const transform = new TransformStream({
