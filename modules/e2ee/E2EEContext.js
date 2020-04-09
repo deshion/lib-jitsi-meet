@@ -129,7 +129,7 @@ export default class E2EEcontext {
             key = false;
         }
         this._currentKeyIndex++;
-        this._cryptoKeyRing[this._currentKeyIndex % this.cryptoKeyRing.length] = key;
+        this._cryptoKeyRing[this._currentKeyIndex % this._cryptoKeyRing.length] = key;
     }
 
     /**
