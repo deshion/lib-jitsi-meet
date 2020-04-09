@@ -1117,7 +1117,7 @@ JitsiConference.prototype._setupNewTrack = function(newTrack) {
     // Setup E2EE handling, if supported.
     if (this._e2eeCtx) {
         const activeTPC = this.getActivePeerConnection();
-        const sender = activeTPC ? activeTPC.findSenderByStream(newTrack.getOriginalStream()) : null;
+        const sender = activeTPC ? activeTPC.findSenderForTrack(newTrack.track) : null;
 
         if (sender) {
             this._e2eeCtx.handleSender(sender, newTrack.getType());
@@ -1653,7 +1653,17 @@ JitsiConference.prototype.onRemoteTrackAdded = function(track) {
         return;
     }
 
-    // TODO: handle E2EE
+    // Setup E2EE handling, if supported.
+    if (this._e2eeCtx) {
+        const activeTPC = this.getActivePeerConnection();
+        const receiver = activeTPC ? activeTPC.findReceiverForTrack(track.track) : null;
+
+        if (receiver) {
+            this._e2eeCtx.handleReceiver(receiver, track.getType());
+        } else {
+            logger.warn(`Could not handle E2EE for remote ${track.getType()} track: receiver not found`);
+        }
+    }
 
     const id = track.getParticipantId();
     const participant = this.getParticipantById(id);
