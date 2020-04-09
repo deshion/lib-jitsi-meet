@@ -49,8 +49,12 @@ export default class E2EEcontext {
     /**
      * Build a new E2EE context instance, which will be used in a given conference.
      *
-     * @param {string} options.salt - Salt to be used for key deviation. We currently use
-     *      the MUC room name for this which has the same lifetime as this context.
+     * @param {string} options.salt - Salt to be used for key deviation.
+     *      FIXME: We currently use the MUC room name for this which has the same lifetime
+     *      as this context. While not (pseudo)random as recommended in
+     *        https://developer.mozilla.org/en-US/docs/Web/API/Pbkdf2Params
+     *      this is easily available and the same for all participants.
+     *      We currently do not enforce a minimum length of 16 bytes either.
      */
     constructor(options) {
         this._options = options;
@@ -64,6 +68,11 @@ export default class E2EEcontext {
         // We keep track of how many frames we have sent per ssrc.
         // Starts with a random offset similar to the RTP sequence number.
         this._sendCounts = new Map();
+
+        // Initialize the salt and convert it once.
+        const encoder = new TextEncoder();
+
+        this._salt = encoder.encode(options.salt);
     }
 
     /**
@@ -132,14 +141,11 @@ export default class E2EEcontext {
         // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey
         const material = await crypto.subtle.importKey('raw', keyBytes,
             'PBKDF2', false, [ 'deriveBits', 'deriveKey' ]);
-        const salt = new ArrayBuffer(16);
-
-        (new Uint8Array(salt)).fill(0); // TODO: actually derive from configured salt.
 
         // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#PBKDF2
         return crypto.subtle.deriveKey({
             name: 'PBKDF2',
-            salt,
+            salt: this._salt,
             iterations: 100000,
             hash: 'SHA-256'
         }, material, {
