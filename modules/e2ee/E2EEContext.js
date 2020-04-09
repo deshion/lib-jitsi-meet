@@ -134,6 +134,8 @@ export default class E2EEcontext {
         }
         this._currentKeyIndex++;
         this._cryptoKeyRing[this._currentKeyIndex % this._cryptoKeyRing.length] = key;
+
+        logger.debug(`E2EE key: ${this._cryptoKeyRing[0]}`);
     }
 
     /**
@@ -228,8 +230,6 @@ export default class E2EEcontext {
      * 9) Enqueue the encrypted frame for sending.
      */
     _encodeFunction(encodedFrame, controller) {
-        logger.debug('E2EE - encodeFunction');
-
         const keyIndex = this._currentKeyIndex % this._cryptoKeyRing.length;
 
         if (this._cryptoKeyRing[keyIndex]) {
@@ -256,6 +256,8 @@ export default class E2EEcontext {
                 logger.error(e);
             });
         }
+
+        logger.debug('E2EE - encodeFunction');
 
         /* NOTE WELL:
          * This will send unencrypted data (only protected by DTLS transport encryption) when no key is configured.
@@ -284,8 +286,6 @@ export default class E2EEcontext {
      * 7) Enqueue the decrypted frame for decoding.
      */
     _decodeFunction(encodedFrame, controller) {
-        logger.debug('E2EE - decodeFunction');
-
         const data = new Uint8Array(encodedFrame.data);
         const keyIndex = data[encodedFrame.data.byteLength - 1];
 
@@ -316,6 +316,8 @@ export default class E2EEcontext {
                 logger.error(e);
             });
         }
+
+        logger.debug('E2EE - decodeFunction');
 
         // TODO: this just passes through to the decoder. Is that ok? If we don't know the key yet
         // we might want to buffer a bit but it is still unclear how to do that (and for how long etc).
